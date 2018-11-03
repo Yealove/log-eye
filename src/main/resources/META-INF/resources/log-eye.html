@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="layui/css/layui.css" media="all">
 </head>
 <body style="margin: 30px">
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend><span id="type">logback</span> - logger列表</legend>
+</fieldset>
 <div class="demoTable">
     Logger：
     <div class="layui-inline">
@@ -39,11 +42,11 @@
             , url: '/log-eye/list'
             , title: 'Logger列表'
             , cols: [[
-                {type:'numbers', title: "序号"}
+                {type: 'numbers', title: "序号"}
                 , {field: 'name', title: 'logger', sort: true}
-                , {field: 'level', title: '日志级别', sort: true}
-                , {field: 'effectiveLevel', title: '生效日志级别', sort: true}
-                , {fixed: 'right', title: '修改日志级别', toolbar: '#barDemo'}
+                , {field: 'level', title: '日志级别', width: 100, sort: true}
+                , {field: 'effectiveLevel', title: '生效级别', width: 100, sort: true}
+                , {fixed: 'right', title: '修改日志级别', width: 385, toolbar: '#barDemo'}
             ]]
         });
 
@@ -68,6 +71,7 @@
         table.on('tool(loggerList)', function (obj) {
             var data = obj.data;
             if (data.effectiveLevel === obj.event) {
+                layer.msg("修改成功！");
                 return;
             }
             data.level = obj.event;

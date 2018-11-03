@@ -2,14 +2,14 @@ package com.github.yealove.logeye.api;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.github.yealove.logeye.vo.Log;
 import com.github.yealove.logeye.vo.Result;
 import com.github.yealove.logeye.vo.ResultCode;
-import com.github.yealove.logeye.vo.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -26,21 +26,38 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/log-eye")
-public class LogController {
-    private static Logger logger = LoggerFactory.getLogger(LogController.class);
+public class LogbackController implements LogApi {
+    private static Logger logger = LoggerFactory.getLogger(LogbackController.class);
     private LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-    @GetMapping("list")
-    public Result listLogger(@RequestParam(required = false) String name) {
+    private List<Log> logs = null;
+
+
+    private void init() {
         List<ch.qos.logback.classic.Logger> loggerList = loggerContext.getLoggerList();
-        ArrayList<Log> logs = new ArrayList<>();
+        logs = new LinkedList<>();
         for (ch.qos.logback.classic.Logger log : loggerList) {
-            String logName = log.getName();
-            if (name == null || logName.contains(name)) {
-                logs.add(new Log(logName, String.valueOf(log.getLevel()), String.valueOf(log.getEffectiveLevel())));
+            logs.add(new Log(log.getName(), String.valueOf(log.getLevel()), String.valueOf(log.getEffectiveLevel())));
+        }
+    }
+
+    @GetMapping("list")
+    public Result list(@RequestParam(required = false) String name) {
+        if (logs == null) {
+            init();
+        }
+
+        if (name == null || "".equals(name.trim())) {
+            return Result.success(logs);
+        }
+
+        List<Log> filterList = new LinkedList<>();
+        for (Log log : logs) {
+            if (log.getName().contains(name)) {
+                filterList.add(log);
             }
         }
-        return Result.success(logs);
+        return Result.success(filterList);
     }
 
     @PutMapping(value = "update", produces = "application/json;charset=UTF-8")
@@ -48,6 +65,8 @@ public class LogController {
         try {
             loggerContext.getLogger(log.getName()).setLevel("null".equals(log.getLevel()) ? null : Level.valueOf(log.getLevel()));
             ch.qos.logback.classic.Logger logger = loggerContext.getLogger(log.getName());
+            //刷新缓存
+            logs = null;
             return Result.success(new Log(logger.getName(), String.valueOf(logger.getLevel()), String.valueOf(logger.getEffectiveLevel())));
         } catch (Exception e) {
             logger.error("修改日志级别失败！", e);
@@ -56,7 +75,7 @@ public class LogController {
     }
 
     @GetMapping(value = "info/{name}")
-    public Result getLogger(@PathVariable String name) {
+    public Result info(@PathVariable String name) {
         try {
             ch.qos.logback.classic.Logger logger = loggerContext.getLogger(name);
             return Result.success(new Log(logger.getName(), String.valueOf(logger.getLevel()), String.valueOf(logger.getEffectiveLevel())));

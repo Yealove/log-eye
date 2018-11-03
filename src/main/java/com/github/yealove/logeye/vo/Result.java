@@ -36,6 +36,10 @@ public class Result {
         return new Result(ResultCode.SUCCESS, data);
     }
 
+    public static Result success(Object data, int count) {
+        return new Result(ResultCode.SUCCESS, data, count);
+    }
+
     public static Result failure(ResultCode resultCode, Object data) {
         return new Result(resultCode, data);
     }
